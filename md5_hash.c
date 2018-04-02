@@ -3,12 +3,13 @@
 // Get the input string, and output address
 // Write MD5 hashed string to output
 // Return 1 if no error
-int hash(char* inp, char* out) {
-	strcpy(out, inp);
-	return 1;
-}
+
+// int hash(char* inp, char* out) {
+// 	strcpy(out, inp);
+// 	return 1;
+// }
  
-void md5(uint8_t *initial_msg, size_t initial_len) {
+void md5(uint8_t *initial_msg, size_t initial_len, char* out) {
 	// These vars will contain the hash
 	uint32_t h0, h1, h2, h3;
 
@@ -77,13 +78,13 @@ void md5(uint8_t *initial_msg, size_t initial_len) {
         // break chunk into sixteen 32-bit words w[j], 0 ≤ j ≤ 15
         uint32_t *w = (uint32_t *) (msg + offset);
  
-#ifdef DEBUG
-        printf("offset: %d %x\n", offset, offset);
+// #ifdef DEBUG
+//         printf("offset: %d %x\n", offset, offset);
  
-        int j;
-        for(j =0; j < 64; j++) printf("%x ", ((uint8_t *) w)[j]);
-        puts("");
-#endif
+//         int j;
+//         for(j =0; j < 64; j++) printf("%x ", ((uint8_t *) w)[j]);
+//         puts("");
+// #endif
  
         // Initialize hash value for this chunk:
         uint32_t a = h0;
@@ -95,22 +96,22 @@ void md5(uint8_t *initial_msg, size_t initial_len) {
         uint32_t i;
         for(i = 0; i<64; i++) {
 
-#ifdef ROUNDS
-            uint8_t *p;
-            printf("%i: ", i);
-            p=(uint8_t *)&a;
-            printf("%2.2x%2.2x%2.2x%2.2x ", p[0], p[1], p[2], p[3], a);
+// #ifdef ROUNDS
+//             uint8_t *p;
+//             printf("%i: ", i);
+//             p=(uint8_t *)&a;
+//             printf("%2.2x%2.2x%2.2x%2.2x ", p[0], p[1], p[2], p[3], a);
          
-            p=(uint8_t *)&b;
-            printf("%2.2x%2.2x%2.2x%2.2x ", p[0], p[1], p[2], p[3], b);
+//             p=(uint8_t *)&b;
+//             printf("%2.2x%2.2x%2.2x%2.2x ", p[0], p[1], p[2], p[3], b);
          
-            p=(uint8_t *)&c;
-            printf("%2.2x%2.2x%2.2x%2.2x ", p[0], p[1], p[2], p[3], c);
+//             p=(uint8_t *)&c;
+//             printf("%2.2x%2.2x%2.2x%2.2x ", p[0], p[1], p[2], p[3], c);
          
-            p=(uint8_t *)&d;
-            printf("%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3], d);
-            puts("");
-#endif        
+//             p=(uint8_t *)&d;
+//             printf("%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3], d);
+//             puts("");
+// #endif        
 
  
             uint32_t f, g;
@@ -129,13 +130,13 @@ void md5(uint8_t *initial_msg, size_t initial_len) {
                 g = (7*i) % 16;
             }
 
-#ifdef ROUNDS
-            printf("f=%x g=%d w[g]=%x\n", f, g, w[g]);
-#endif 
+// #ifdef ROUNDS
+//             printf("f=%x g=%d w[g]=%x\n", f, g, w[g]);
+// #endif 
             uint32_t temp = d;
             d = c;
             c = b;
-            printf("rotateLeft(%x + %x + %x + %x, %d)\n", a, f, k[i], w[g], r[i]);
+            // printf("rotateLeft(%x + %x + %x + %x, %d)\n", a, f, k[i], w[g], r[i]);
             b = b + LEFTROTATE((a + f + k[i] + w[g]), r[i]);
             a = temp;
 
@@ -157,26 +158,26 @@ void md5(uint8_t *initial_msg, size_t initial_len) {
 	
 	// result
 	uint8_t *p;
-	char result[32], temp[8];
+	char temp[8];
 	
 	p=(uint8_t *)&h0;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(result, temp);
+	strcat(out, temp);
 
     p=(uint8_t *)&h1;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(result, temp);
+	strcat(out, temp);
  
     p=(uint8_t *)&h2;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(result, temp);
+	strcat(out, temp);
  
     p=(uint8_t *)&h3;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(result, temp);
+	strcat(out, temp);
 
-	for (int i = 0; i < strlen(result); i++) {
-		printf("%c ", result[i]);
+	for (int i = 0; i < strlen(out); i++) {
+		printf("%c ", out[i]);
 	}
 }
 
