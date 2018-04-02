@@ -1,0 +1,20 @@
+Dò mật khẩu:
+- đầu vào: một mật khẩu đã đc băm bằng md5
+- đầu ra: bản rõ
+- điều kiện: 
+  + độ dài mật khẩu và bảng kí tự chọn trước
+  + sử dụng tính toán song song với mpicc
+  + cài đặt trên cụm tính toán rock cluster
+
+Thực hiện:
+- độ dài mật khẩu: 8 kí tự
+- bảng chữ cái: từ a-z và chữ số từ 0-9, không phân biệt hoa thường
+- mật khẩu: luugu196
+- băm mật khẩu bằng md5 --> bản mã
+- cài mpicc trên rockcluster
+- chia đều số mật khẩu có thể cho các máy --> hash mật khẩu và so khớp:
+  + dùng thuật toán sinh để sinh lần lượt các mật khẩu (đưa vào điểm đầu và cuối): thuật toán sinh kế tiếp chỉnh hợp lặp
+  + băm mật khẩu bằng md5 
+  + so khớp
+- khi tìm ra mật khẩu: gửi tín hiệu dừng --> các tiến trình các cùng dừng lại
+--> tiến trình master ghi kết quả ra file
