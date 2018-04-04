@@ -6,5 +6,4 @@
 // leftrotate function definition
 #define LEFTROTATE(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
-int hash(char* inp, char* out);
-void md5(uint8_t *initial_msg, size_t initial_len);
+void md5(uint8_t *initial_msg, size_t initial_len, char* out);

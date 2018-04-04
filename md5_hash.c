@@ -2,13 +2,6 @@
 
 // Get the input string, and output address
 // Write MD5 hashed string to output
-// Return 1 if no error
-
-// int hash(char* inp, char* out) {
-// 	strcpy(out, inp);
-// 	return 1;
-// }
- 
 void md5(uint8_t *initial_msg, size_t initial_len, char* out) {
 	// These vars will contain the hash
 	uint32_t h0, h1, h2, h3;
@@ -162,29 +155,29 @@ void md5(uint8_t *initial_msg, size_t initial_len, char* out) {
 	
 	p=(uint8_t *)&h0;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(out, temp);
+	strcpy(out, temp);
 
     p=(uint8_t *)&h1;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(out, temp);
+	strcpy(out + 8, temp);
  
     p=(uint8_t *)&h2;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(out, temp);
+	strcpy(out + 16, temp);
  
     p=(uint8_t *)&h3;
     sprintf(temp, "%2.2x%2.2x%2.2x%2.2x", p[0], p[1], p[2], p[3]);
-	strcat(out, temp);
+	strcpy(out + 24, temp);
 
-	for (int i = 0; i < strlen(out); i++) {
-		printf("%c ", out[i]);
-	}
+	// for (int i = 0; i < strlen(out); i++) {
+	// 	printf("%c ", out[i]);
+	// }
 }
 
-int main() {
-	md5("abc", 3);
-	return 1;
-}
+// int main() {
+// 	md5("abc", 3);
+// 	return 1;
+// }
 
 /*
 int main(int argc, char **argv) {

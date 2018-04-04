@@ -16,5 +16,14 @@ Thực hiện:
   + dùng thuật toán sinh để sinh lần lượt các mật khẩu (đưa vào điểm đầu và cuối): thuật toán sinh kế tiếp chỉnh hợp lặp
   + băm mật khẩu bằng md5 
   + so khớp
-- khi tìm ra mật khẩu: gửi tín hiệu dừng --> các tiến trình các cùng dừng lại
---> tiến trình master ghi kết quả ra file
+
+- tiến trình master: 
+  + chia phần mật khẩu rồi gửi cho các tiến trình con, giữ lại 1 phần cho mình
+  + khi tìm ra mật khẩu thông báo cho các tiến trình khác dừng lại
+  + khi kết thúc mà chưa tìm ra mật khẩu -> chờ các tiến trình khác
+    -> nếu có tiến trình gửi mật khẩu thì cho các tiến trình dừng lại, in ra rồi kết thúc
+    -> nếu tất cả các tiến trình kết thúc thì kết thúc
+- tiến trình con: 
+  + nhận phần mật khẩu được chia từ master
+  + khi tìm ra mật khẩu -> gửi cho master -> master cho các tiến trình khác dừng lại
+  + khi kết thúc mà ko tìm ra mật khẩu -> gửi tín hiệu kết thúc cho master

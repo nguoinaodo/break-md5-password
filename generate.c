@@ -56,6 +56,7 @@ int generate_next_indices(int size, int end[], int curr[], int next[]) {
 		}
 	}
 
+	// end
 	if (stop) {
 		return -1;
 	}
@@ -74,10 +75,10 @@ int generate_next_indices(int size, int end[], int curr[], int next[]) {
 
 	indices_to_string(size, next, str);
 	// printf("%s\n", str);
-	for (int i = 0; i < size; i++) {
-		printf("%c ", str[i]);
-	}
-	printf("\n");
+	// for (int i = 0; i < size; i++) {
+	// 	printf("%c ", str[i]);
+	// }
+	// printf("\n");
 
 	return 1;
 }
@@ -98,6 +99,7 @@ int indices_to_string(int size, int indices[], char* str) {
 	for (int i = 0; i < size; i++) {
 		str[i] = ALPHABET[indices[i]];
 	}
+	str[size] = '\0';
 }
 
 
