@@ -16,8 +16,8 @@ int generate_next_permutation(const char* end, char* curr, char* next) {
 		
 		// Find k that k > j, s[k] > s[j] and s[k] <= s[i] with all i > k
 		int k = j + 1;
-
-		for (int i = k + 1; i < m; i++) {
+		int i;
+		for (i = k + 1; i < m; i++) {
 			if (curr[i] > curr[j] && 
 					curr[i] < curr[k]) {
 				k = i;
@@ -49,8 +49,8 @@ int generate_next_subset(int size, char* alphabet, char* curr, char* next) {
 int generate_next_indices(int size, int end[], int curr[], int next[]) {
 	// Check end condition
 	int stop = 1;
-
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		if (curr[i] != end[i]) {
 			stop = 0;
 		}
@@ -63,7 +63,7 @@ int generate_next_indices(int size, int end[], int curr[], int next[]) {
 
 	// Next string
 	// Copy array
-	for (int i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		next[i] = curr[i];
 	}
 
@@ -96,7 +96,8 @@ void next_indices(int next[], int i) {
 
 // Convert from indices array to string via alphabet
 int indices_to_string(int size, int indices[], char* str) {
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		str[i] = ALPHABET[indices[i]];
 	}
 	str[size] = '\0';

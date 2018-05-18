@@ -15,27 +15,6 @@ char* true_password;
 // Number of processes
 int num_proc;
 
-// int main(int argc, char** argv) {
-// 	// Input hashed string
-// 	if (argc < 2) {
-// 		printf("Please enter hashed string.\n");
-// 		return 0;
-// 	}
-
-// 	strcpy(hashed, argv[1]);
-// 	size = atoi(argv[2]);
-
-// 	char inp[] = {'d', 'c', 'b', 'a', '\0'};
-// 	char out[5];
-
-// 	md5(inp, 4, out);
-// 	int cmp = strcmp(out, hashed);
-// 	printf("hashed %s\n", hashed);
-// 	printf("out %s\n", out);
-// 	printf("compare = %d\n", cmp);
-// 	return 1;
-// }
-
 int main(int argc, char** argv) {
 
 	// Input hashed string
@@ -63,7 +42,10 @@ int main(int argc, char** argv) {
 	// Handle
 	if (my_rank == 0) {
 		// Rank 0
+		time_t t0 = time(0);
 		rank_0();
+		float x = time(0) - t0;
+		printf("Time %f\n", x);
 	} else {
 		// Rank k
 		rank_k();
@@ -80,52 +62,74 @@ int main(int argc, char** argv) {
 
 // Rank 0 handler
 int rank_0() {
+	int i, j, sm;
+	
+	// Receive finish signal
+	MPI_Request recv_finish_request[num_proc - 1];
+	int finish_buff[num_proc - 1][1]; 
+
+	for (i = 1; i < num_proc; i++) {
+		MPI_Irecv(finish_buff[i - 1], 1, MPI_INT, i, TAG_COMPUTE_FINISH,
+				MPI_COMM_WORLD, recv_finish_request + i - 1);
+	}
+
+	printf("rank 0 init receive finish signal\n");
+
+	// Receive true password
+	MPI_Request recv_password_request;
+
+	MPI_Irecv(true_password, size + 1, MPI_CHAR, MPI_ANY_SOURCE, TAG_COMPUTE_SEND_TRUE_PASSWORD,
+			MPI_COMM_WORLD, &recv_password_request);
+
+	printf("rank 0 init receive true password\n");
+
 	// Devide password for compute processes
 	int* prefix[num_proc];
 	printf("size = %d\n", size);
+	
 	// password prefix array for each process
-	// int m = (int)ceil(1. * (N - m0) / (num_proc - 1));
-	int m_0 = 0;
-
-	while ((N - m_0) % (num_proc - 1)) {
-		m_0++;
-	}
-
-	int m = (N - m_0) / (num_proc - 1);
+	int m_0 = N % num_proc;
+	int m = N / num_proc;
 
 	printf("Number of character in alphabet: %d\n", N);
 	printf("m = %d\n", m);
+	printf("m0 = %d\n", m_0);
 	printf("rank 0: num process = %d\n", num_proc);
 
-	// rank k > 0
-	for (int i = 1; i < num_proc; i++) {
+	// Prefixes
+	int marr[num_proc];
+
+	sm = 0;
+	for (i = 0; i < num_proc; i++) {
 		// allocate 
-		prefix[i] = (int*)malloc(sizeof(int) * m);
-		// printf("prefix rank %d: ", i);
-		for (int j = 0; j < m; j++) {
-			prefix[i][j] = (i - 1) * m + j;
-			// printf("%d ", prefix[i][j]);
+		if (m_0 > 0) {
+			marr[i] = m + 1;
+			m_0--;
+		} else {
+			marr[i] = m;
 		}
-		// printf("\n");
-	}
 
-	// rank 0
-	// int m_0 = N % m ? N % m : m;
-	printf("m0 = %d\n", m_0);
+		prefix[i] = (int*)malloc(sizeof(int) * marr[i]);
 
-	prefix[0] = (int*)malloc(sizeof(int) * m_0);
-	printf("prefix rank 0: ");
-	for (int j = 0; j < m_0; j++) {
-		prefix[0][j] = (num_proc - 1) * m + j;
-		printf("%c ", ALPHABET[prefix[0][j]]);
+		printf("prefix rank %d: ", i);
+		for (j = 0; j < marr[i]; j++) {
+			prefix[i][j] = sm + j;
+			printf("%d ", prefix[i][j]);
+		}
+		printf("\n");
+
+		sm += marr[i];
 	}
-	printf("\n");
 
 	// Send prefix arrays
 	MPI_Status status;
 
 	// rank k > 0
-	for (int i = 1 ; i < num_proc; i++) {
+	for (i = 1 ; i < num_proc; i++) {
+		// send prefix array length
+		MPI_Send(marr + i, 1, MPI_INT, i, TAG_MASTER_SEND_PREFIX_ARRAY_LENGTH,
+				MPI_COMM_WORLD);
+
 		// send prefix array
 		MPI_Send(prefix[i], m, MPI_INT, i, TAG_MASTER_SEND_PREFIX_ARRAY,
 				MPI_COMM_WORLD);
@@ -140,30 +144,31 @@ int rank_0() {
 	int end[size];
 
 	// end
-	end[0] = prefix[0][m_0 - 1];
-	for (int i = 1; i < size; i++) {
+	end[0] = prefix[0][marr[0] - 1];
+	for (i = 1; i < size; i++) {
 		end[i] = N - 1;
 	}
 	printf("rank 0 end:");
-	for (int i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		printf("%c ", ALPHABET[end[i]]);
 	}
 	printf("\n");
 
 	// current
 	curr[0] = prefix[0][0];
-	for (int i = 1; i < size; i++) {
+	for (i = 1; i < size; i++) {
 		curr[i] = 0;
 	}
+
 	printf("rank 0 curr:");
-	for (int i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		printf("%c ", ALPHABET[curr[i]]);
 	}
 	printf("\n");
 	
 
 	// Free
-	for (int i = 0; i < num_proc; i++) {
+	for (i = 0; i < num_proc; i++) {
 		free(prefix[i]);
 	}
 
@@ -171,28 +176,9 @@ int rank_0() {
 	int finished[num_proc];
 	int num_finished = 0;
 
-	for (int i = 0; i < num_proc; i++) {
+	for (i = 0; i < num_proc; i++) {
 		finished[i] = 0;
 	} 
-
-	// Receive finish signal
-	MPI_Request recv_finish_request[num_proc - 1];
-	int finish_buff[num_proc - 1][1]; 
-
-	for (int i = 1; i < num_proc; i++) {
-		MPI_Irecv(finish_buff[i - 1], 1, MPI_INT, i, TAG_COMPUTE_FINISH,
-				MPI_COMM_WORLD, recv_finish_request + i - 1);
-	}
-
-	printf("rank 0 init receive finish signal\n");
-
-	// Receive true password
-	MPI_Request recv_password_request;
-
-	MPI_Irecv(true_password, size + 1, MPI_CHAR, MPI_ANY_SOURCE, TAG_COMPUTE_SEND_TRUE_PASSWORD,
-			MPI_COMM_WORLD, &recv_password_request);
-
-	printf("rank 0 init receive true password\n");
 
 	int count = 0;
 	while (1) {
@@ -216,7 +202,7 @@ int rank_0() {
 		}
 
 		// listen to finish signal from compute
-		for (int i = 1; i < num_proc; i++) {
+		for (i = 1; i < num_proc; i++) {
 			MPI_Test(recv_finish_request + i - 1, finished + i, &status);
 			num_finished += finished[i];
 			if (finished[i]) {
@@ -234,7 +220,7 @@ int rank_0() {
 		if (!(count % 100000)) {
 		// if (1) {
 			printf("rank %d: ", my_rank);
-			for (int i = 0; i < size; i++) {
+			for (i = 0; i < size; i++) {
 				printf("%c ", ALPHABET[curr[i]]);
 			}
 			printf("\n");
@@ -262,64 +248,6 @@ int rank_0() {
 
 // Rank k handler
 int rank_k() {
-	// Length of prefix array at process rank k > 0
-	int m_0 = 0;
-
-	while ((N - m_0) % (num_proc - 1)) {
-		m_0++;
-	}
-
-	int m = (N - m_0) / (num_proc - 1);
-	
-	// printf("rank %d: num process = %d\n", my_rank, num_proc);
-
-	int prefix[m]; // prefix array
-	MPI_Status status; // MPI status
-
-	// Receive prefix array
-	MPI_Recv(prefix, m, MPI_INT, 0, TAG_MASTER_SEND_PREFIX_ARRAY, 
-			MPI_COMM_WORLD, &status);
-	printf("rank %d received prefix array\n", my_rank);
-
-	printf("prefix rank %d: ", my_rank);
-	for (int i = 0; i < m; i++) {
-		printf("%c ", ALPHABET[prefix[i]]);
-	}
-	printf("\n");
-
-	// if (status.MPI_ERROR) {
-	// 	printf("error rank k");
-	// 	compute_finish();
-	// 	return 0;
-	// }
-
-	// First and last password candidate
-	int curr[size]; // current candidate
-	int end[size]; // end candidate
-
-	// end
-	end[0] = prefix[m - 1];
-	for (int i = 1; i < size; i++) {
-		end[i] = N - 1;
-	}
-	printf("rank %d end:", my_rank);
-	for (int i = 0; i < size; i++) {
-		printf("%c ", ALPHABET[end[i]]);
-	}
-	printf("\n");
-
-	// current
-	curr[0] = prefix[0];
-	for (int i = 1; i < size; i++) {
-		curr[i] = 0;
-	}
-	printf("rank %d curr:", my_rank);
-	for (int i = 0; i < size; i++) {
-		printf("%c ", ALPHABET[curr[i]]);
-	}
-	printf("\n");
-
-
 	// Init receive stop signal
 	int stop_buff[1];
 	MPI_Request recv_stop_request;
@@ -328,6 +256,55 @@ int rank_k() {
 			MPI_COMM_WORLD, &recv_stop_request);
 
 	printf("rank %d init receive stop signal\n", my_rank);
+
+	MPI_Status status; // MPI status
+
+	// Length of prefix array at process rank k > 0
+	int m;
+
+	// Receive prefix array length
+	MPI_Recv(&m, 1, MPI_INT, 0, TAG_MASTER_SEND_PREFIX_ARRAY_LENGTH, 
+			MPI_COMM_WORLD, &status);
+
+	int prefix[m]; // prefix array
+
+	// Receive prefix array
+	MPI_Recv(prefix, m, MPI_INT, 0, TAG_MASTER_SEND_PREFIX_ARRAY, 
+			MPI_COMM_WORLD, &status);
+	printf("rank %d received prefix array\n", my_rank);
+
+	printf("prefix rank %d: ", my_rank);
+	int i;
+	for (i = 0; i < m; i++) {
+		printf("%c ", ALPHABET[prefix[i]]);
+	}
+	printf("\n");
+
+	// First and last password candidate
+	int curr[size]; // current candidate
+	int end[size]; // end candidate
+
+	// end
+	end[0] = prefix[m - 1];
+	for (i = 1; i < size; i++) {
+		end[i] = N - 1;
+	}
+	printf("rank %d end:", my_rank);
+	for (i = 0; i < size; i++) {
+		printf("%c ", ALPHABET[end[i]]);
+	}
+	printf("\n");
+
+	// current
+	curr[0] = prefix[0];
+	for (i = 1; i < size; i++) {
+		curr[i] = 0;
+	}
+	printf("rank %d curr:", my_rank);
+	for (i = 0; i < size; i++) {
+		printf("%c ", ALPHABET[curr[i]]);
+	}
+	printf("\n");
 
 	int count = 0;
 	while (1) {
@@ -346,7 +323,7 @@ int rank_k() {
 		
 		if (!(count % 100000)) {
 			printf("rank %d: ", my_rank);
-			for (int i = 0; i < size; i++) {
+			for (i = 0; i < size; i++) {
 				printf("%c ", ALPHABET[curr[i]]);
 			}
 			printf("\n");
@@ -404,7 +381,8 @@ int generate_hash_compare(int curr[], int end[]) {
 	}
 
 	// update current
-	for (int i = 0; i < size; i++) {
+	int i;
+	for (i = 0; i < size; i++) {
 		curr[i] = next[i];
 	}
 
@@ -439,7 +417,8 @@ int stop_all_computes() {
 	int buff[] = {1}; 
 
 	// Send stop signals
-	for (int i = 1; i < num_proc; i++) {
+	int i;
+	for (i = 1; i < num_proc; i++) {
 		MPI_Send(buff, 1, MPI_INT, i, TAG_MASTER_SEND_STOP_SIGNAL,
 				MPI_COMM_WORLD);
 	}
